@@ -89,6 +89,7 @@ jobs:
             SURREAL_PASSWORD=root
             SURREAL_NAMESPACE=open_notebook
             SURREAL_DATABASE=production
+            INTERNAL_API_URL=http://localhost:5055
           secrets: |
             OPEN_NOTEBOOK_PASSWORD=app-password:latest
             OPENAI_API_KEY=openai-api-key:latest
