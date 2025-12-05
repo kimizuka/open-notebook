@@ -44,13 +44,28 @@ export async function GET(request: NextRequest) {
     const hostHeader = request.headers.get('host')
 
     if (hostHeader) {
-      // Extract just the hostname (remove port if present)
-      const hostname = hostHeader.split(':')[0]
+      // Check if we're behind a reverse proxy (Cloud Run, nginx, etc.)
+      // These headers indicate the request came through a proxy
+      const isReverseProxied = request.headers.get('x-forwarded-proto') !== null ||
+                                request.headers.get('x-forwarded-for') !== null
 
-      // Construct the API URL with port 5055
-      const apiUrl = `${proto}://${hostname}:5055`
+      // For reverse proxy environments (Cloud Run, etc.):
+      // - Use the host header as-is (the proxy routes /api/* to the backend internally)
+      // - Next.js rewrites handle proxying to localhost:5055
+      // For direct access (development without proxy):
+      // - Append port 5055 to reach the API directly
+      let apiUrl: string
+      if (isReverseProxied) {
+        // Behind proxy: use host as-is (e.g., https://xxx.a.run.app)
+        const hostname = hostHeader.split(':')[0]
+        apiUrl = `${proto}://${hostname}`
+      } else {
+        // Direct access: append API port
+        const hostname = hostHeader.split(':')[0]
+        apiUrl = `${proto}://${hostname}:5055`
+      }
 
-      console.log(`[runtime-config] Auto-detected API URL: ${apiUrl} (proto=${proto}, host=${hostHeader})`)
+      console.log(`[runtime-config] Auto-detected API URL: ${apiUrl} (proto=${proto}, host=${hostHeader}, proxied=${isReverseProxied})`)
 
       return NextResponse.json({
         apiUrl,
