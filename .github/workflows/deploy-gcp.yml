@@ -1,0 +1,99 @@
+name: Deploy to GCP Cloud Run
+
+on:
+  push:
+    branches: [develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: asia-northeast1
+  SERVICE_NAME: open-notebook
+  ARTIFACT_REGISTRY: asia-northeast1-docker.pkg.dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "tag=$VERSION-$SHORT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.ARTIFACT_REGISTRY }}
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo docker image prune --all --force
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.single
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/open-notebook/${{ env.SERVICE_NAME }}:${{ steps.version.outputs.tag }}
+            ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/open-notebook/${{ env.SERVICE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/open-notebook/${{ env.SERVICE_NAME }}:${{ steps.version.outputs.tag }}
+          flags: |
+            --execution-environment=gen2
+            --cpu=2
+            --memory=4Gi
+            --min-instances=0
+            --max-instances=3
+            --port=8502
+            --timeout=3600
+            --concurrency=80
+            --add-volume=name=mydata,type=cloud-storage,bucket=${{ secrets.GCS_BUCKET }}
+            --add-volume-mount=volume=mydata,mount-path=/mydata
+            --allow-unauthenticated
+          env_vars: |
+            SURREAL_URL=ws://localhost:8000/rpc
+            SURREAL_USER=root
+            SURREAL_PASSWORD=root
+            SURREAL_NAMESPACE=open_notebook
+            SURREAL_DATABASE=production
+          secrets: |
+            OPEN_NOTEBOOK_PASSWORD=app-password:latest
+            OPENAI_API_KEY=openai-api-key:latest
+
+      - name: Output URL
+        run: |
+          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')
+          echo "## 🚀 Deployed to: $URL" >> $GITHUB_STEP_SUMMARY
