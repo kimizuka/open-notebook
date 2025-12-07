@@ -34,8 +34,9 @@ RUN uv sync --frozen --no-dev
 COPY . /app
 
 # Install frontend dependencies and build
+# Note: --force ensures native modules (lightningcss) are rebuilt for Linux
 WORKDIR /app/frontend
-RUN npm ci
+RUN npm ci --force
 RUN npm run build
 
 # Return to app root
