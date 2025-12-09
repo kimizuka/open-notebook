@@ -2,7 +2,7 @@ name: Deploy to GCP Cloud Run
 
 on:
   push:
-    branches: [develop]
+    branches: [sakura-ai]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -89,9 +89,10 @@ jobs:
             SURREAL_PASSWORD=root
             SURREAL_NAMESPACE=open_notebook
             SURREAL_DATABASE=production
+            OPENAI_COMPATIBLE_BASE_URL=https://api.ai.sakura.ad.jp/v1
           secrets: |
             OPEN_NOTEBOOK_PASSWORD=app-password:latest
-            OPENAI_API_KEY=openai-api-key:latest
+            OPENAI_COMPATIBLE_API_KEY=sakura-ai-api-key:latest
 
       - name: Output URL
         run: |
