@@ -93,7 +93,6 @@ jobs:
             SURREAL_DATABASE=production
             OPENAI_COMPATIBLE_BASE_URL=https://api.ai.sakura.ad.jp/v1
           secrets: |
-            OPEN_NOTEBOOK_PASSWORD=app-password:latest
             OPENAI_COMPATIBLE_API_KEY=sakura-ai-api-key:latest
             CLERK_SECRET_KEY=clerk-secret-key:latest
             CLERK_JWT_PUBLIC_KEY=clerk-jwt-public-key:latest
