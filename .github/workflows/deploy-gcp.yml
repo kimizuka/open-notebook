@@ -102,17 +102,17 @@ jobs:
           URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')
           echo "## 🚀 Deployed to: $URL" >> $GITHUB_STEP_SUMMARY
 
-      # - name: Cleanup old revisions
-      #   run: |
-      #     # 最新のリビジョン以外を削除
-      #     OLD_REVISIONS=$(gcloud run revisions list \
-      #       --service=${{ env.SERVICE_NAME }} \
-      #       --region=${{ env.REGION }} \
-      #       --format='value(name)' \
-      #       --filter='status.conditions.status:True AND status.conditions.type:Active' \
-      #       --sort-by='~metadata.creationTimestamp' | tail -n +2)
-      #
-      #     for rev in $OLD_REVISIONS; do
-      #       echo "Deleting old revision: $rev"
-      #       gcloud run revisions delete "$rev" --region=${{ env.REGION }} --quiet || true
-      #     done
+      - name: Cleanup old revisions
+        run: |
+          # 最新のリビジョン以外を削除
+          OLD_REVISIONS=$(gcloud run revisions list \
+            --service=${{ env.SERVICE_NAME }} \
+            --region=${{ env.REGION }} \
+            --format='value(name)' \
+            --filter='status.conditions.status:True AND status.conditions.type:Active' \
+            --sort-by='~metadata.creationTimestamp' | tail -n +2)
+
+          for rev in $OLD_REVISIONS; do
+            echo "Deleting old revision: $rev"
+            gcloud run revisions delete "$rev" --region=${{ env.REGION }} --quiet || true
+          done
