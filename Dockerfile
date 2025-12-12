@@ -36,6 +36,11 @@ COPY . /app
 # Install frontend dependencies and build
 WORKDIR /app/frontend
 RUN npm ci
+
+# Clerk publishable key is needed at build time for Next.js
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
 RUN npm run build
 
 # Return to app root

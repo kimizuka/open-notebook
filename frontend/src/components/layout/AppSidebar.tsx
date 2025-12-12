@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { SignOutButton } from '@clerk/nextjs'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/lib/hooks/use-auth'
 import { useSidebarStore } from '@/lib/stores/sidebar-store'
 import { useCreateDialogs } from '@/lib/hooks/use-create-dialogs'
 import {
@@ -75,7 +75,6 @@ type CreateTarget = 'source' | 'notebook' | 'podcast'
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const { logout } = useAuth()
   const { isCollapsed, toggleCollapse } = useSidebarStore()
   const { openSourceDialog, openNotebookDialog, openPodcastDialog } = useCreateDialogs()
 
@@ -331,27 +330,29 @@ export function AppSidebar() {
           </div>
 
           {isCollapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-center"
-                  onClick={logout}
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Sign Out</TooltipContent>
-            </Tooltip>
+            <SignOutButton redirectUrl="/login">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-center"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Sign Out</TooltipContent>
+              </Tooltip>
+            </SignOutButton>
           ) : (
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3"
-              onClick={logout}
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
+            <SignOutButton redirectUrl="/login">
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-3"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </SignOutButton>
           )}
         </div>
       </div>

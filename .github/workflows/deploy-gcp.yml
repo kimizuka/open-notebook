@@ -2,7 +2,7 @@ name: Deploy to GCP Cloud Run
 
 on:
   push:
-    branches: [sakura-ai]
+    branches: [sakura-ai, clerk]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -62,6 +62,8 @@ jobs:
           tags: |
             ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/open-notebook/${{ env.SERVICE_NAME }}:${{ steps.version.outputs.tag }}
             ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/open-notebook/${{ env.SERVICE_NAME }}:latest
+          build-args: |
+            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -93,23 +95,25 @@ jobs:
           secrets: |
             OPEN_NOTEBOOK_PASSWORD=app-password:latest
             OPENAI_COMPATIBLE_API_KEY=sakura-ai-api-key:latest
+            CLERK_SECRET_KEY=clerk-secret-key:latest
+            CLERK_JWT_PUBLIC_KEY=clerk-jwt-public-key:latest
 
       - name: Output URL
         run: |
           URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')
           echo "## 🚀 Deployed to: $URL" >> $GITHUB_STEP_SUMMARY
 
-      - name: Cleanup old revisions
-        run: |
-          # 最新のリビジョン以外を削除
-          OLD_REVISIONS=$(gcloud run revisions list \
-            --service=${{ env.SERVICE_NAME }} \
-            --region=${{ env.REGION }} \
-            --format='value(name)' \
-            --filter='status.conditions.status:True AND status.conditions.type:Active' \
-            --sort-by='~metadata.creationTimestamp' | tail -n +2)
-
-          for rev in $OLD_REVISIONS; do
-            echo "Deleting old revision: $rev"
-            gcloud run revisions delete "$rev" --region=${{ env.REGION }} --quiet || true
-          done
+      # - name: Cleanup old revisions
+      #   run: |
+      #     # 最新のリビジョン以外を削除
+      #     OLD_REVISIONS=$(gcloud run revisions list \
+      #       --service=${{ env.SERVICE_NAME }} \
+      #       --region=${{ env.REGION }} \
+      #       --format='value(name)' \
+      #       --filter='status.conditions.status:True AND status.conditions.type:Active' \
+      #       --sort-by='~metadata.creationTimestamp' | tail -n +2)
+      #
+      #     for rev in $OLD_REVISIONS; do
+      #       echo "Deleting old revision: $rev"
+      #       gcloud run revisions delete "$rev" --region=${{ env.REGION }} --quiet || true
+      #     done

@@ -1,10 +1,9 @@
-import { LoginForm } from '@/components/auth/LoginForm'
-import { ErrorBoundary } from '@/components/common/ErrorBoundary'
+import { SignIn } from "@clerk/nextjs";
 
 export default function LoginPage() {
   return (
-    <ErrorBoundary>
-      <LoginForm />
-    </ErrorBoundary>
-  )
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <SignIn forceRedirectUrl="/notebooks" />
+    </div>
+  );
 }

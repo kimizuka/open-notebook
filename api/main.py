@@ -8,7 +8,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
-from api.auth import PasswordAuthMiddleware
+from api.auth import ClerkAuthMiddleware
+# from api.auth import PasswordAuthMiddleware
 from api.routers import (
     auth,
     chat,
@@ -83,9 +84,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Add password authentication middleware first
+# Add authentication middleware
 # Exclude /api/auth/status and /api/config from authentication
-app.add_middleware(PasswordAuthMiddleware, excluded_paths=["/", "/health", "/docs", "/openapi.json", "/redoc", "/api/auth/status", "/api/config"])
+# Password から切り替える場合は↓の ClerkAuthMiddleware を削除して PasswordAuthMiddleware を適用。
+# app.add_middleware(PasswordAuthMiddleware, excluded_paths=["/", "/health", "/docs", "/openapi.json", "/redoc", "/api/auth/status", "/api/config"])
+app.add_middleware(ClerkAuthMiddleware, excluded_paths=["/", "/health", "/docs", "/openapi.json", "/redoc", "/api/auth/status", "/api/config"])
 
 # Add CORS middleware last (so it processes first)
 app.add_middleware(

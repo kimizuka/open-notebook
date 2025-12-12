@@ -36,6 +36,12 @@ COPY . /app
 # Install frontend dependencies and build
 WORKDIR /app/frontend
 RUN npm ci
+
+# Clerk authentication build-time argument
+# This must be provided at build time for Next.js client-side authentication
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+
 RUN npm run build
 
 # Return to app root

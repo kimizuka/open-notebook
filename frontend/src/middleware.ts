@@ -1,19 +1,33 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+// 認証不要のルート
+const isPublicRoute = createRouteMatcher(["/login(.*)", "/sign-up(.*)"]);
 
-  // Redirect root to notebooks
-  if (pathname === '/') {
-    return NextResponse.redirect(new URL('/notebooks', request.url))
+export default clerkMiddleware(async (auth, req) => {
+  const { userId } = await auth();
+
+  // ルートパスは /notebooks にリダイレクト
+  if (req.nextUrl.pathname === "/") {
+    return NextResponse.redirect(new URL("/notebooks", req.url));
   }
 
-  return NextResponse.next()
-}
+  // 認証済みユーザーがログインページにアクセスした場合は /notebooks にリダイレクト
+  if (userId && isPublicRoute(req)) {
+    return NextResponse.redirect(new URL("/notebooks", req.url));
+  }
+
+  // 公開ルート以外は認証を要求
+  if (!isPublicRoute(req)) {
+    await auth.protect();
+  }
+});
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    // Next.jsの内部ファイルと静的ファイルを除外
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // APIルートは常に実行
+    "/(api|trpc)(.*)",
   ],
-}
+};
