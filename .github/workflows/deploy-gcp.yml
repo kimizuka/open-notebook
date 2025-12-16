@@ -77,7 +77,7 @@ jobs:
             --execution-environment=gen2
             --cpu=2
             --memory=4Gi
-            --min-instances=0
+            --min-instances=1
             --max-instances=3
             --port=8502
             --timeout=3600
