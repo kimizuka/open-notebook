@@ -23,7 +23,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+        signInUrl="/login"
+        signUpUrl="/sign-up"
+        signInFallbackRedirectUrl="/notebooks"
+        signUpFallbackRedirectUrl="/notebooks"
+      >
       <html lang="en" suppressHydrationWarning>
         <head>
           <script dangerouslySetInnerHTML={{ __html: themeScript }} />
