@@ -86,6 +86,7 @@ jobs:
             --add-volume-mount=volume=mydata,mount-path=/mydata
             --allow-unauthenticated
           env_vars: |
+            DATA_FOLDER=/mydata
             SURREAL_URL=ws://localhost:8000/rpc
             SURREAL_USER=root
             SURREAL_PASSWORD=root
